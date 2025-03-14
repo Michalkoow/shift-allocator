@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assigned Employees</title>
+</head>
+<body>
+    <h1>Employee Assignments</h1>
+
+    {% for department, employees in assignments.items %}
+        <h2>{{ department }}</h2>
+        <ul>
+            {% for emp in employees %}
+                <li>{{ emp }}</li>
+            {% empty %}
+                <li>No employees assigned.</li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+
+    <br>
+    <a href="{% url 'employee_list' %}">Back to Employee List</a>
+</body>
+</html>
