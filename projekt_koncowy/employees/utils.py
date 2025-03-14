@@ -3,22 +3,33 @@ import random
 
 
 def assign_employees():
-    """Przydziela pracowników do działów według dostępności i rotacji."""
+    """Przydziela pracowników do działów według dostępności i sprawiedliwej rotacji."""
 
     departments = Department.objects.all()
-    employees = Employee.objects.filter(status="available").order_by('?')  # Losowa kolejność dla rotacji
+    employees = list(Employee.objects.filter(status="available").order_by('?'))  # Zamieniamy QuerySet na listę
+
+    # Czyszczenie wcześniejszych przypisań
+    for emp in employees:
+        emp.department.clear()  # Usuwamy wcześniejsze przypisania
 
     assignments = {}  # Słownik {dział: lista_pracowników}
 
-    for department in departments:
-        available_spots = department.capacity
-        assigned = employees[:available_spots]  # Wybieramy pierwszych X pracowników
-        employees = employees[available_spots:]  # Usuwamy już przypisanych
+    # Przydzielamy pracowników do działów rotacyjnie
+    department_cycle = list(departments)  # Lista działów do rotacyjnego przypisywania
 
-        for emp in assigned:
-            emp.department.add(department)  # Przypisujemy pracownika do działu
-            emp.save()
+    while employees:
+        for department in department_cycle:
+            if not employees:  # Jeśli skończyli się dostępni pracownicy, przerywamy
+                break
 
-        assignments[department.name] = [f"{e.first_name} {e.last_name}" for e in assigned]
+            if department.capacity > len(department.employee_set.all()):  # Sprawdzamy czy jest miejsce
+                emp = employees.pop(0)  # Pobieramy pierwszego pracownika z listy
+                emp.department.add(department)  # Przypisujemy go do działu
+                emp.save()  # Zapisujemy zmianę
 
-    return assignments  # Zwracamy listę przydzielonych osób do każdego działu
+                # Dodajemy do listy przypisanych
+                if department.name not in assignments:
+                    assignments[department.name] = []
+                assignments[department.name].append(f"{emp.first_name} {emp.last_name}")
+
+    return assignments  # Zwracamy wynik przypisań

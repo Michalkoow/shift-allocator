@@ -1,0 +1,22 @@
+# Ignorowanie wirtualnego środowiska
+venv/
+env/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.sqlite3
+
+# Ignorowanie logów
+*.log
+logs/
+debug.log
+
+# Ignorowanie plików IDE i edytorów
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Ignorowanie plików tymczasowych systemu
+Thumbs.db
