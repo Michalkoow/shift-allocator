@@ -15,9 +15,10 @@ class Employee(models.Model):
         max_length=20,
         choices=[
             ('available', 'Available'),
-            ('vacation', 'On Vacation'),
+            ('holiday', 'Holiday'),
             ('sick', 'Sick Leave'),
-            ('absent', 'Absent')
+            ('absent', 'Absent'),
+            ('off', 'Day off')
         ],
         default='available'
     )

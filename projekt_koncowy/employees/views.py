@@ -2,11 +2,43 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Employee  # Usunięcie błędnego importu assign_employees
 from .forms import EmployeeForm
 from .utils import assign_employees  # Poprawny import funkcji z utils.py
+from django.core.paginator import Paginator
+
+from django.shortcuts import render
+from .models import Employee
 
 def employee_list(request):
+    query = request.GET.get('q', '')  # Pobranie wartości z paska wyszukiwania
+    sort_order = request.GET.get('sort', 'asc')  # Pobranie parametru sortowania
     employees = Employee.objects.all()
-    print(f"Pobrani pracownicy w widoku: {employees}")  # Debugowanie - sprawdzenie co Django widzi
-    return render(request, 'employees/employee_list.html', {'employees': employees})
+
+    # Filtrowanie pracowników
+    if query:
+        employees = employees.filter(
+            first_name__icontains=query
+        ) | employees.filter(
+            last_name__icontains=query
+        ) | employees.filter(
+            department__name__icontains=query
+        ).distinct()
+
+    # Sortowanie po nazwisku
+    if sort_order == "asc":
+        employees = employees.order_by("last_name")
+    else:
+        employees = employees.order_by("-last_name")  # Malejąco
+
+    # Paginacja - 20 pracowników na stronę
+    paginator = Paginator(employees, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'employees/employee_list.html', {
+        'employees': page_obj,  # Teraz `employees` zawiera tylko bieżącą stronę
+        'query': query,
+        'sort_order': sort_order,
+        'page_obj': page_obj
+    })
 
 
 def add_employee(request):

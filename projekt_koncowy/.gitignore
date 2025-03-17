@@ -1,0 +1,8 @@
+# Ignorowanie wirtualnego środowiska
+venv/ __pycache__/
+# Ignorowanie bazy danych
+db.sqlite3
+# Ignorowanie plików statycznych
+staticfiles/
+# Ignorowanie plików cache Django
+*.pyc *.pyo *.log
