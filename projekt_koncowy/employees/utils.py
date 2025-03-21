@@ -1,35 +1,50 @@
-from .models import Employee, Department
 import random
+from zoneinfo import available_timezones
 
+from .models import Employee, Department
 
 def assign_employees():
-    """Przydziela pracowników do działów według dostępności i sprawiedliwej rotacji."""
+    departments = list(Department.objects.all())
+    employees = list(Employee.objects.filter(status__iexact='available'))
 
-    departments = Department.objects.all()
-    employees = list(Employee.objects.filter(status="available").order_by('?'))  # Zamieniamy QuerySet na listę
 
     # Czyszczenie wcześniejszych przypisań
     for emp in employees:
-        emp.department.clear()  # Usuwamy wcześniejsze przypisania
+        emp.department.clear()
 
-    assignments = {}  # Słownik {dział: lista_pracowników}
+    random.shuffle(employees)  # losujemy kolejność pracowników
 
-    # Przydzielamy pracowników do działów rotacyjnie
-    department_cycle = list(departments)  # Lista działów do rotacyjnego przypisywania
+    assignments = {}  # {nazwa_działu: [lista pracowników]}
+    history = {}  # {employee_id: [lista_nazw_działów]}
 
     while employees:
-        for department in department_cycle:
-            if not employees:  # Jeśli skończyli się dostępni pracownicy, przerywamy
-                break
+        for department in departments:
+            if not employees:
+                break  # jeśli skończyli się pracownicy
 
-            if department.capacity > len(department.employee_set.all()):  # Sprawdzamy czy jest miejsce
-                emp = employees.pop(0)  # Pobieramy pierwszego pracownika z listy
-                emp.department.add(department)  # Przypisujemy go do działu
-                emp.save()  # Zapisujemy zmianę
+            if department.capacity > department.employee_set.count():
+                for emp in employees:
+                    # lista działów, w których już był pracownik (jeśli brak, to pusty)
+                    previous_departments = history.get(emp.id, [])
 
-                # Dodajemy do listy przypisanych
-                if department.name not in assignments:
-                    assignments[department.name] = []
-                assignments[department.name].append(f"{emp.first_name} {emp.last_name}")
+                    # Sprawdź, czy nie był już przypisany do tego działu w tym tygodniu
+                    if department.name not in previous_departments:
+                        emp.department.add(department)
+                        emp.save()
 
-    return assignments  # Zwracamy wynik przypisań
+                        # Zapisz przypisanie do historii
+                        if emp.id not in history:
+                            history[emp.id] = []
+                        history[emp.id].append(department.name)
+
+                        # Zapisz przypisanie do zwrotu
+                        if department.name not in assignments:
+                            assignments[department.name] = []
+                        assignments[department.name].append(f"{emp.first_name} {emp.last_name}")
+
+
+                        # Usuń pracownika z listy do przydziału
+                        employees.remove(emp)
+                        break  # przechodzimy do kolejnego działu
+
+    return assignments
