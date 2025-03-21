@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Przydziel pracowników</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+    <h1 class="mb-4">Przydziel pracowników do działów</h1>
+
+    <!-- Form wysyłający poprawny POST -->
+    <form method="POST" action="{% url 'assign_employees' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Przydziel</button>
+    </form>
+
+    <hr>
+
+    {% if assignments %}
+        <h2>Wyniki przydziału:</h2>
+        {% for department, employees in assignments.items %}
+            <div class="card my-3">
+                <div class="card-header">
+                    <strong>{{ department }}</strong>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for emp in employees %}
+                            <li class="list-group-item">{{ emp }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">Brak danych – kliknij przycisk powyżej, aby przydzielić pracowników.</p>
+    {% endif %}
+
+    <a href="{% url 'employee_list' %}" class="btn btn-secondary mt-4">Powrót do listy pracowników</a>
+</body>
+</html>

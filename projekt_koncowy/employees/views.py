@@ -3,10 +3,8 @@ from .models import Employee  # Usunięcie błędnego importu assign_employees
 from .forms import EmployeeForm
 from .utils import assign_employees  # Poprawny import funkcji z utils.py
 from django.core.paginator import Paginator
-from .utils import assign_employees  # zakładamy, że funkcja jest w pliku utils.py
 
-from django.shortcuts import render
-from .models import Employee
+
 
 def employee_list(request):
     query = request.GET.get('q', '')  # Pobranie wartości z paska wyszukiwania
@@ -53,24 +51,27 @@ def add_employee(request):
 
     return render(request, 'employees/add_employee.html', {'form': form})
 
+
+
+
 # def assign_employees_view(request):
 #     assignments = None
 #
 #     if request.method == "POST":
 #         assignments = assign_employees()
+#         print("PRZYDZIAŁY:", assignments)  # 👀 Powinno się pojawić w terminalu!
 #
 #     return render(request, 'employees/assign_employees.html', {'assignments': assignments})
 
-
 def assign_employees_view(request):
-    assignments = None
+    print("✅ Otrzymano `POST`!")  # Powinno pojawić się w terminalu
 
     if request.method == "POST":
-        assignments = assign_employees()
-        print("PRZYDZIAŁY:", assignments)  # <-- ważne
+        assignments = assign_employees()  # Czy zwraca poprawne dane?
+        print("📌 Wyniki przypisania:", assignments)  # Powinno pojawić się w terminalu
+        return render(request, 'employees/assign_employees.html', {'assignments': assignments})
 
-    return render(request, 'employees/assign_employees.html', {'assignments': assignments})
-
+    return render(request, 'employees/assign_employees.html', {'assignments': None})
 
 
 
