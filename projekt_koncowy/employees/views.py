@@ -6,26 +6,29 @@ from django.core.paginator import Paginator
 
 
 
+from django.db.models import Q
+
 def employee_list(request):
-    query = request.GET.get('q', '')  # Pobranie wartości z paska wyszukiwania
+    query = request.GET.get('q', '').strip()  # Pobranie i usunięcie białych znaków
     sort_order = request.GET.get('sort', 'asc')  # Pobranie parametru sortowania
+    status_filter = request.GET.get('status', '')  # Pobranie statusu
+
     employees = Employee.objects.all()
 
-    # Filtrowanie pracowników
+    # Filtrowanie pracowników po nazwisku, imieniu, dziale
     if query:
         employees = employees.filter(
-            first_name__icontains=query
-        ) | employees.filter(
-            last_name__icontains=query
-        ) | employees.filter(
-            department__name__icontains=query
-        ).distinct()
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(department__name__icontains=query)
+        )
+
+    # Filtrowanie po statusie
+    if status_filter:
+        employees = employees.filter(status=status_filter)
 
     # Sortowanie po nazwisku
-    if sort_order == "asc":
-        employees = employees.order_by("last_name")
-    else:
-        employees = employees.order_by("-last_name")  # Malejąco
+    employees = employees.order_by("last_name") if sort_order == "asc" else employees.order_by("-last_name")
 
     # Paginacja - 20 pracowników na stronę
     paginator = Paginator(employees, 20)
@@ -33,11 +36,13 @@ def employee_list(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'employees/employee_list.html', {
-        'employees': page_obj,  # Teraz `employees` zawiera tylko bieżącą stronę
+        'employees': page_obj,
         'query': query,
         'sort_order': sort_order,
+        'status_filter': status_filter,
         'page_obj': page_obj
     })
+
 
 
 def add_employee(request):
