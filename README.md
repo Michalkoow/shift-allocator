@@ -32,13 +32,11 @@ cd shift-allocator
 python -m venv venv
 source venv/bin/activate  # Linux/macOS
 # .\venv\Scripts\activate  # Windows
-
 3. Zainstaluj wymagane pakiety:
 
 pip install -r requirements.txt
 
 4.Skonfiguruj połączenie z bazą PostgreSQL w pliku settings.py.
-
 5. Wykonaj migracje:
 
 python manage.py migrate
