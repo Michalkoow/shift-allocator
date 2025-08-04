@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Employee  # Usunięcie błędnego importu assign_employees
-from .forms import EmployeeForm
+from .forms import EmployeeForm, AssignmentForm
 from .utils import assign_employees  # Poprawny import funkcji z utils.py
 from django.core.paginator import Paginator
 
@@ -100,3 +100,16 @@ def delete_employee(request, employee_id):
         return redirect('employee_list')
 
     return render(request, 'employees/delete_employee.html', {'employee': employee})
+
+def add_assignment(request):
+    if request.method == 'POST':
+        form = AssignmentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('employee_list')
+
+    else:
+        form = AssignmentForm()
+
+    return render(request, 'employees/add_assignment.html', {'form': form})
+

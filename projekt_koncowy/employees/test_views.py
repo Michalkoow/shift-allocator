@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 from django.test import Client
-from .models import Employee
+from employees.models import Employee
 from datetime import date
 
 # Test widoku listy pracowników

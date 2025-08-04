@@ -27,3 +27,22 @@ class Employee(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+
+class Shift(models.Model):
+    name = models.CharField(max_length=100)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    def __str__(self):
+        return self.name
+
+
+class Assignment(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
+    date = models.DateField()
+
+    def __str__(self):
+        return f"{self.employee.first_name} {self.employee.last_name} {self.shift}, {self.date}, {self.department.name}"
+
