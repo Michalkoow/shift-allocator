@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Employee  # Usunięcie błędnego importu assign_employees
+from .models import Employee, Assignment
 from .forms import EmployeeForm, AssignmentForm
-from .utils import assign_employees  # Poprawny import funkcji z utils.py
+from .utils import assign_employees
 from django.core.paginator import Paginator
 
 
@@ -112,4 +112,25 @@ def add_assignment(request):
         form = AssignmentForm()
 
     return render(request, 'employees/add_assignment.html', {'form': form})
+
+
+def assignment_list(request):
+    date_filter = request.GET.get('date', '')  # pobranie daty z GET
+    assignments = Assignment.objects.all().order_by('-date')
+
+    # Filtrowanie po dacie
+    if date_filter:
+        assignments = assignments.filter(date=date_filter)
+
+    # Paginacja - 10 przydziałów na stronę
+    paginator = Paginator(assignments, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'employees/assignment_list.html', {
+        'assignments': page_obj,
+        'date_filter': date_filter,
+        'page_obj': page_obj
+    })
+
 
