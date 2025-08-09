@@ -135,3 +135,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
+
+
+# Auth redirects
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'employee_list'
+LOGOUT_REDIRECT_URL = 'login'

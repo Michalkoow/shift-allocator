@@ -1,14 +1,18 @@
 from django.urls import path
-from .views import employee_list, add_employee, edit_employee, delete_employee, assign_employees_view
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
-    path('', employee_list, name='employee_list'),
-    path('add/', add_employee, name='add_employee'),
-    path('assign/', assign_employees_view, name='assign_employees'),
-    path('edit/<int:employee_id>/', edit_employee, name='edit_employee'),
-    path('delete/<int:employee_id>/', delete_employee, name='delete_employee'),
+    path('', views.employee_list, name='employee_list'),
+    path('add/', views.add_employee, name='add_employee'),
+    path('edit/<int:employee_id>/', views.edit_employee, name='edit_employee'),
+    path('delete/<int:employee_id>/', views.delete_employee, name='delete_employee'),
+
+    path('assign/', views.assign_employees_view, name='assign_employees'),
     path('assignment/add/', views.add_assignment, name='add_assignment'),
     path('assignments/', views.assignment_list, name='assignment_list'),
 
+    path('login/',  auth_views.LoginView.as_view(template_name='employees/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('register/', views.register, name='register'),
 ]

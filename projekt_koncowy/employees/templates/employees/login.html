@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Logowanie{% endblock %}
+{% block content %}
+  <h1 class="mb-4">Logowanie</h1>
+  <form method="post" class="card p-4 shadow-sm mb-3">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Zaloguj</button>
+    <a href="{% url 'register' %}" class="btn btn-link">Nie masz konta? Zarejestruj się</a>
+  </form>
+  <a href="{% url 'employee_list' %}" class="btn btn-secondary">Powrót</a>
+{% endblock %}
