@@ -4,64 +4,71 @@
 
 <h1 class="mb-4">Assignment List</h1>
 
-<!-- Filtrowanie po dacie -->
+<!-- Filtrowanie po dacie (GET) -->
 <form method="GET" class="mb-3 d-flex align-items-center">
-    <input type="date" name="date" class="form-control me-2" value="{{ date_filter }}">
-    <button type="submit" class="btn btn-outline-primary me-2">Filter</button>
-    <a href="{% url 'assignment_list' %}" class="btn btn-outline-secondary">Clear</a>
+  <input type="date" name="date" class="form-control me-2" value="{{ date_filter }}">
+  <button type="submit" class="btn btn-outline-primary me-2">Filter</button>
+  <a href="{% url 'assignment_list' %}" class="btn btn-outline-secondary">Clear</a>
 </form>
 
-<!-- Lista przydziałów -->
 {% if assignments %}
-    <table class="table table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>Employee</th>
-                <th>Department</th>
-                <th>Shift</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for assignment in assignments %}
-            <tr>
-                <td>{{ assignment.employee.first_name }} {{ assignment.employee.last_name }}</td>
-                <td>{{ assignment.department.name }}</td>
-                <td>{{ assignment.shift.name }}</td>
-                <td>{{ assignment.date }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <table class="table table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Employee</th>
+        <th>Department</th>
+        <th>Shift</th>
+        <th>Date</th>
+        <th style="width: 120px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for assignment in assignments %}
+        <tr>
+          <td>{{ assignment.employee.first_name }} {{ assignment.employee.last_name }}</td>
+          <td>{{ assignment.department.name }}</td>
+          <td>{{ assignment.shift.name }}</td>
+          <td>{{ assignment.date }}</td>
+          <td>
+            <form method="post" action="{% url 'assignment_delete' assignment.id %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger"
+                      onclick="return confirm('Na pewno usunąć ten przydział?')">
+                Usuń
+              </button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-    <!-- Paginacja -->
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?date={{ date_filter }}&page=1">First</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?date={{ date_filter }}&page={{ page_obj.previous_page_number }}">Previous</a>
-                </li>
-            {% endif %}
-
-            <li class="page-item active">
-                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            </li>
-
-            {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?date={{ date_filter }}&page={{ page_obj.next_page_number }}">Next</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?date={{ date_filter }}&page={{ page_obj.paginator.num_pages }}">Last</a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
+  <!-- Paginacja (GET) -->
+  <nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?date={{ date_filter }}&page=1">First</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?date={{ date_filter }}&page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+      {% endif %}
+      <li class="page-item active">
+        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      </li>
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?date={{ date_filter }}&page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?date={{ date_filter }}&page={{ page_obj.paginator.num_pages }}">Last</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
 {% else %}
-    <p class="text-muted text-center">No assignments found.</p>
+  <p class="text-muted text-center">No assignments found.</p>
 {% endif %}
 
 {% endblock %}
