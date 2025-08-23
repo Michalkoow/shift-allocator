@@ -261,21 +261,26 @@ def test_assign_employees_post_assigns_when_logged(logged_client, dept_sales):
 
 @pytest.mark.django_db
 def test_delete_assignment_removes_assignment(logged_client, employee_jan, dept_sales, shift_morning):
-    # 1. Tworzymy przykładowy przydział
     assignment = Assignment.objects.create(
-        employee=employee_jan,
-        department=dept_sales,
-        shift=shift_morning,
-        date=date(2025, 1, 5)
+        employee=employee_jan, department=dept_sales, shift=shift_morning, date=date(2025, 1, 5)
     )
-
-    # 2. Wysyłamy POST na endpoint usuwania przydziału
     url = reverse("assignment_delete", args=[assignment.id])
-    response = logged_client.post(url)
-
-    # 3. Sprawdzamy przekierowanie po usunięciu
-    assert response.status_code == 302
-    assert response.url == reverse("assignment_list")
-
-    # 4. Sprawdzamy, czy obiekt został usunięty z bazy
+    resp = logged_client.post(url)
+    assert resp.status_code == 302
+    assert resp.url == reverse("assignment_list")
     assert not Assignment.objects.filter(id=assignment.id).exists()
+
+
+@pytest.mark.django_db
+def test_assignment_delete_redirects_when_anon(client, employee_jan, dept_sales, shift_morning):
+    """Anonimowy użytkownik -> redirect do /login/ i brak usunięcia."""
+    a = Assignment.objects.create(
+        employee=employee_jan, department=dept_sales, shift=shift_morning, date=date(2025, 1, 10)
+    )
+    url = reverse("assignment_delete", args=[a.id])
+    resp = client.post(url)
+    assert resp.status_code == 302
+    assert "/login" in resp.url
+    assert Assignment.objects.filter(id=a.id).exists()
+
+
