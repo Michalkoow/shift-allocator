@@ -5,13 +5,12 @@ Aplikacja Django do sprawiedliwego przydzielania pracowników do działów na zm
 ##  Funkcjonalności
 
 -  Lista pracowników z filtrowaniem, sortowaniem i paginacją
--  Dodawanie nowych pracowników
--  Edytowanie danych pracownika
--  Usuwanie pracowników
+- Dodawanie, usuwanie, edytowanie Pracowników i Deparamentów
 -  Automatyczny przydział pracowników do działów na podstawie dostępności i pojemności działu
 -  Wyszukiwanie po imieniu, nazwisku i dziale
 -  Widoki dostępne tylko dla zalogowanych
--  Rejestracja i logowanie użytkownika 
+-  Rejestracja i logowanie użytkownika
+-  
 
 ##  Technologie
 
