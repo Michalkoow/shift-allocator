@@ -46,7 +46,7 @@ python manage.py migrate
 
 python manage.py runserver
 
-Zarejestruj się aby mieć dostęp do innego widoku niż base.html i zarządaj pracownikami, działami z poziomu aplikacji webowej :)
+Zarejestruj się aby mieć dostęp do innego widoku niż base.html i zarządzaj pracownikami, działami z poziomu aplikacji webowej :)
 
 Autor 
 
