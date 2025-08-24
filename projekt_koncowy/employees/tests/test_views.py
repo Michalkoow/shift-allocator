@@ -7,13 +7,13 @@
 # ====================================================================
 
 import pytest
+import datetime
 from datetime import date, time
 from django.urls import reverse
 from django.test import Client
 from django.contrib.auth.models import User
 
 from employees.models import Employee, Department, Shift, Assignment
-
 
 # ================== FIKSTURY WSPÓLNE ==================
 # Fikstury to takie „gotowce” do testów – tworzą użytkowników, klientów, obiekty w bazie.
@@ -222,29 +222,52 @@ def test_delete_assignment_removes_assignment(logged_client, employee_jan, dept_
 @pytest.mark.django_db
 def test_assignment_delete_redirects_when_anon(client, employee_jan, dept_sales, shift_morning):
     # ❌ niezalogowany nie może usuwać
-    a = Assignment.objects.create(employee=employee_jan, department=dept_sales, shift=shift_morning, date=date(2025, 1, 10))
+    a = Assignment.objects.create(
+        employee=employee_jan, department=dept_sales, shift=shift_morning, date=date(2025, 1, 10)
+    )
     url = reverse("assignment_delete", args=[a.id])
     resp = client.post(url)
     assert Assignment.objects.filter(id=a.id).exists()
 
 
-# ================== ALGORYTM PRZYDZIAŁU ==================
+# ================== ALGORYTM PRZYDZIAŁU (assign_employees_view) ==================
 
 @pytest.mark.django_db
-def test_assign_employees_get_redirects_or_renders_form(client):
-    # ✅ GET dla algorytmu → albo redirect do login, albo renderuje stronę
+def test_assign_employees_get_returns_200(logged_client):
+    # ✅ GET renderuje stronę algorytmu
     url = reverse("assign_employees")
-    resp = client.get(url)
-    assert resp.status_code in (200, 302)
-
-@pytest.mark.django_db
-def test_assign_employees_post_assigns_when_logged(logged_client, dept_sales):
-    # ✅ POST do algorytmu coś przypisuje / zwraca stronę
-    Employee.objects.create(first_name="A", last_name="A", status="available", hire_date=date(2024, 1, 1))
-    Employee.objects.create(first_name="B", last_name="B", status="available", hire_date=date(2024, 1, 2))
-    url = reverse("assign_employees")
-    resp = logged_client.post(url)
+    resp = logged_client.get(url)
     assert resp.status_code == 200
+    assert b"Przydziel pracownik" in resp.content  # nagłówek
+
+@pytest.mark.django_db
+def test_assign_employees_post_preview_returns_html(monkeypatch, logged_client, dept_sales, employee_jan, shift_morning):
+    # ✅ „Przydziel” (preview) zwraca HTML z wynikami – patchujemy algorytm na przewidywalny
+    from employees import views as v
+    monkeypatch.setattr(v, "assign_employees", lambda: {dept_sales.name: [f"{employee_jan.first_name} {employee_jan.last_name}"]})
+
+    url = reverse("assign_employees")
+    data = {"date": "2025-08-24", "shift": shift_morning.id, "action": "preview"}
+    resp = logged_client.post(url, data)
+    assert resp.status_code == 200
+    assert b"Kowalski" in resp.content  # wynik podglądu widoczny
+
+@pytest.mark.django_db
+def test_assign_employees_post_save_creates_assignments(monkeypatch, logged_client, dept_sales, employee_jan, shift_morning):
+    # ✅ „Zapisz do bazy” tworzy rekordy Assignment – patchujemy algorytm na przewidywalny
+    from employees import views as v
+    monkeypatch.setattr(v, "assign_employees", lambda: {dept_sales.name: [f"{employee_jan.first_name} {employee_jan.last_name}"]})
+
+    url = reverse("assign_employees")
+    data = {"date": "2025-08-24", "shift": shift_morning.id, "action": "save"}
+    resp = logged_client.post(url, data)
+    assert resp.status_code == 302  # redirect do assignment_list
+    assert Assignment.objects.filter(
+        employee=employee_jan,
+        department=dept_sales,
+        shift=shift_morning,
+        date=datetime.date(2025, 8, 24),
+    ).exists()
 
 
 # ================== DEPARTMENTS (CRUD, staff required) ==================

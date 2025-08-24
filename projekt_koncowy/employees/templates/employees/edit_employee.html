@@ -1,11 +1,55 @@
 {% extends "base.html" %}
 {% block title %}Edit Employee{% endblock %}
+
 {% block content %}
 <h1 class="mb-4">Edit Employee - {{ employee.first_name }} {{ employee.last_name }}</h1>
-<form method="post">
+
+<form method="post" class="row g-3">
   {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" class="btn btn-success">Save Changes</button>
-  <a href="{% url 'employee_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+
+  <!-- Imię -->
+  <div class="col-md-6">
+    {{ form.first_name.label_tag }}
+    {{ form.first_name }}
+  </div>
+
+  <!-- Nazwisko -->
+  <div class="col-md-6">
+    {{ form.last_name.label_tag }}
+    {{ form.last_name }}
+  </div>
+
+  <!-- Status -->
+  <div class="col-md-6">
+    {{ form.status.label_tag }}
+    {{ form.status }}
+  </div>
+
+  <!-- Hire date -->
+  <div class="col-md-6">
+    {{ form.hire_date.label_tag }}
+    {{ form.hire_date }}
+  </div>
+
+  <!-- Departamenty (checkboxy) -->
+  <div class="col-12">
+    <label class="form-label">{{ form.department.label }}</label>
+    <div class="row">
+      {% for checkbox in form.department %}
+        <div class="col-md-4">
+          <div class="form-check">
+            {{ checkbox.tag }} {{ checkbox.choice_label }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <small class="text-muted">{{ form.department.help_text }}</small>
+  </div>
+
+  <!-- Przyciski -->
+  <div class="col-12">
+    <button type="submit" class="btn btn-success">Save Changes</button>
+    <a href="{% url 'employee_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+  </div>
 </form>
 {% endblock %}

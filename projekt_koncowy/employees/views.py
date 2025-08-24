@@ -9,7 +9,8 @@ from django.views.generic import ListView, CreateView, DeleteView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 
-from .models import Employee, Assignment, Department
+import datetime
+from .models import Employee, Assignment, Department, Shift
 from .forms import EmployeeForm, AssignmentForm
 from .utils import assign_employees
 
@@ -27,7 +28,7 @@ def employee_list(request):
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |
             Q(department__name__icontains=query)
-        )
+        ).distinct()  # unikamy duplikatów przy M2M
 
     if status_filter:
         employees = employees.filter(status=status_filter)
@@ -47,7 +48,7 @@ def employee_list(request):
     })
 
 
-# === DZIAŁY (lista + dodawanie) ===
+# === DZIAŁY (lista + CRUD) ===
 class DepartmentListView(LoginRequiredMixin, ListView):
     model = Department
     template_name = "employees/department_list.html"
@@ -64,19 +65,19 @@ class DepartmentCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         return self.request.user.is_staff
 
 
-class DepartmentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    model = Department
-    template_name = "employees/department_confirm_delete.html"
-    success_url = reverse_lazy("department_list")
-
-    # tylko staff może usuwać działy
-    def test_func(self):
-        return self.request.user.is_staff
-
 class DepartmentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Department
     fields = ['name', 'capacity']
-    template_name = "employees/department_form.html"  # ten sam szablon co dla CreateView
+    template_name = "employees/department_form.html"  # ten sam szablon co CreateView
+    success_url = reverse_lazy("department_list")
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class DepartmentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Department
+    template_name = "employees/department_confirm_delete.html"
     success_url = reverse_lazy("department_list")
 
     def test_func(self):
@@ -124,10 +125,110 @@ def delete_employee(request, employee_id):
 # === ALGORYTM PRZYDZIAŁU (chronione) ===
 @login_required
 def assign_employees_view(request):
+    """
+    GET  -> formularz (data + zmiana) i ewentualny podgląd przydziałów
+    POST (action=preview) -> generuje PODGLĄD (bez zapisu)
+    POST (action=save)    -> generuje i ZAPISUJE do Assignment, potem redirect na listę
+    """
     if request.method == "POST":
-        assignments = assign_employees()
-        return render(request, 'employees/assign_employees.html', {'assignments': assignments})
-    return render(request, 'employees/assign_employees.html', {'assignments': None})
+        action = request.POST.get("action", "preview")
+        date_str = request.POST.get("date")        # 'YYYY-MM-DD'
+        shift_id = request.POST.get("shift")
+
+        # Zawsze generujemy wynik algorytmu (podgląd lub do zapisu)
+        result = assign_employees()  # np. {Department (lub nazwa): [Employee, ...]}
+
+        # Tylko podgląd
+        if action == "preview":
+            return render(
+                request,
+                'employees/assign_employees.html',
+                {
+                    'assignments': result,
+                    'shifts': Shift.objects.all(),
+                    'date': date_str,
+                    'selected_shift_id': shift_id,
+                }
+            )
+
+        # Zapis do bazy
+        errors = []
+        if not date_str:
+            errors.append("Wybierz datę.")
+        if not shift_id:
+            errors.append("Wybierz zmianę.")
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+            return render(
+                request,
+                'employees/assign_employees.html',
+                {
+                    'assignments': result,
+                    'shifts': Shift.objects.all(),
+                    'date': date_str,
+                    'selected_shift_id': shift_id,
+                }
+            )
+
+        target_date = datetime.date.fromisoformat(date_str)
+        shift = get_object_or_404(Shift, pk=shift_id)
+
+        created = 0
+
+        def resolve_employee(item):
+            # 1) już obiekt Employee
+            if isinstance(item, Employee):
+                return item
+            # 2) identyfikator (int/str z cyframi)
+            if isinstance(item, int) or (isinstance(item, str) and item.isdigit()):
+                return Employee.objects.filter(pk=int(item)).first()
+            # 3) string "Imię Nazwisko" (lub wieloczłonowe nazwisko)
+            if isinstance(item, str):
+                parts = item.strip().split()
+                if len(parts) >= 2:
+                    first = parts[0]
+                    last = " ".join(parts[1:])
+                    return Employee.objects.filter(first_name=first, last_name=last).first()
+                # fallback: spróbuj po samym imieniu
+                return Employee.objects.filter(first_name=item.strip()).first()
+            return None
+
+        for dept_key, employees in (result or {}).items():
+            # dział: obiekt lub nazwa
+            if isinstance(dept_key, Department):
+                dept = dept_key
+            else:
+                dept = Department.objects.filter(name=str(dept_key)).first()
+            if not dept:
+                continue  # nie znaleziono działu – pomiń
+
+            for emp_item in employees:
+                employee = resolve_employee(emp_item)
+                if not employee:
+                    continue  # nie udało się zmapować pracownika
+
+                Assignment.objects.create(
+                    employee=employee,
+                    department=dept,
+                    shift=shift,
+                    date=target_date,
+                )
+                created += 1
+
+        messages.success(request, f"Zapisano {created} przydziałów na {target_date} (zmiana: {shift.name}).")
+        return redirect('assignment_list')
+
+    # GET – pusty formularz + lista zmian
+    return render(
+        request,
+        'employees/assign_employees.html',
+        {
+            'assignments': None,
+            'shifts': Shift.objects.all(),
+            'date': datetime.date.today().isoformat()
+        }
+    )
 
 
 # === PRZYDZIAŁY (chronione) ===

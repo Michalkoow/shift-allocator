@@ -1,31 +1,55 @@
 {% extends "base.html" %}
-{% block title %}Assign Employees{% endblock %}
+
 {% block content %}
 <h1 class="mb-4">Przydziel pracowników do działów</h1>
 
-<form method="POST" action="{% url 'assign_employees' %}">
+<form method="post" class="row g-3 mb-4">
   {% csrf_token %}
-  <button type="submit" class="btn btn-primary">Przydziel</button>
-  <a href="{% url 'employee_list' %}" class="btn btn-secondary ms-2">Powrót</a>
+
+  <div class="col-md-3">
+    <label class="form-label">Data</label>
+    <!-- date zawsze przychodzi z widoku; na wszelki wypadek fallback na pusty string -->
+    <input type="date" name="date" class="form-control" value="{{ date|default:'' }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Zmiana</label>
+    <select name="shift" class="form-select">
+      <option value="">-- wybierz --</option>
+      {% for s in shifts %}
+        <option value="{{ s.id }}"
+          {% if selected_shift_id|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>
+          {{ s.name }} ({{ s.start_time }}-{{ s.end_time }})
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-6 d-flex align-items-end gap-2">
+    <button name="action" value="preview" class="btn btn-primary">Przydziel</button>
+    <button name="action" value="save" class="btn btn-success">Zapisz do bazy</button>
+    <a href="{% url 'assignment_list' %}" class="btn btn-secondary">Powrót</a>
+  </div>
 </form>
 
 <hr>
 
+<h4>Wyniki przydziału:</h4>
+
 {% if assignments %}
-  <h2>Wyniki przydziału:</h2>
-  {% for department, emps in assignments.items %}
-    <div class="card my-3">
-      <div class="card-header"><strong>{{ department }}</strong></div>
-      <div class="card-body">
-        <ul class="list-group">
-          {% for emp in emps %}
-            <li class="list-group-item">{{ emp }}</li>
-          {% endfor %}
-        </ul>
-      </div>
+  {% for dept, employees in assignments.items %}
+    <div class="card mb-3">
+      <div class="card-header fw-bold">{{ dept }}</div>
+      <ul class="list-group list-group-flush">
+        {% for emp in employees %}
+          <li class="list-group-item">
+            {% if emp.first_name %}{{ emp.first_name }} {{ emp.last_name }}{% else %}{{ emp }}{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
     </div>
   {% endfor %}
 {% else %}
-  <p class="text-muted">Brak danych – kliknij przycisk powyżej, aby przydzielić pracowników.</p>
+  <p class="text-muted">Brak danych podglądu. Wybierz datę i zmianę, kliknij „Podgląd”.</p>
 {% endif %}
 {% endblock %}
