@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Departments</h2>
+
+  {% if request.user.is_authenticated and request.user.is_staff %}
+    <p><a href="{% url 'department_add' %}" class="btn btn-success">➕ Add new department</a></p>
+  {% endif %}
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Capacity</th>
+        {% if request.user.is_authenticated and request.user.is_staff %}
+          <th>Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for dept in departments %}
+        <tr>
+          <td>{{ dept.name }}</td>
+          <td>{{ dept.capacity }}</td>
+          {% if request.user.is_authenticated and request.user.is_staff %}
+            <td>
+              <a href="{% url 'department_edit' dept.pk %}" class="btn btn-sm btn-warning">✏️ Edit</a>
+              <a href="{% url 'department_delete' dept.pk %}" class="btn btn-sm btn-danger">🗑 Delete</a>
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="{% if request.user.is_authenticated and request.user.is_staff %}3{% else %}2{% endif %}">
+            No departments available.
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

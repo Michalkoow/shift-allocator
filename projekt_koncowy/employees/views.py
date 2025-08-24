@@ -5,7 +5,11 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-from .models import Employee, Assignment
+from django.views.generic import ListView, CreateView, DeleteView, UpdateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.urls import reverse_lazy
+
+from .models import Employee, Assignment, Department
 from .forms import EmployeeForm, AssignmentForm
 from .utils import assign_employees
 
@@ -41,6 +45,42 @@ def employee_list(request):
         'status_filter': status_filter,
         'page_obj': page_obj
     })
+
+
+# === DZIAŁY (lista + dodawanie) ===
+class DepartmentListView(LoginRequiredMixin, ListView):
+    model = Department
+    template_name = "employees/department_list.html"
+    context_object_name = "departments"
+
+
+class DepartmentCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = Department
+    fields = ['name', 'capacity']
+    template_name = "employees/department_form.html"
+    success_url = reverse_lazy("department_list")
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class DepartmentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Department
+    template_name = "employees/department_confirm_delete.html"
+    success_url = reverse_lazy("department_list")
+
+    # tylko staff może usuwać działy
+    def test_func(self):
+        return self.request.user.is_staff
+
+class DepartmentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Department
+    fields = ['name', 'capacity']
+    template_name = "employees/department_form.html"  # ten sam szablon co dla CreateView
+    success_url = reverse_lazy("department_list")
+
+    def test_func(self):
+        return self.request.user.is_staff
 
 
 # === CRUD PRACOWNIKÓW (chronione) ===
