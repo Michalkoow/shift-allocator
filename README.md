@@ -5,13 +5,11 @@ Aplikacja Django do sprawiedliwego przydzielania pracowników do działów na zm
 ##  Funkcjonalności
 
 -  Lista pracowników z filtrowaniem, sortowaniem i paginacją
--  Dodawanie nowych pracowników
--  Edytowanie danych pracownika
--  Usuwanie pracowników
+- Dodawanie, usuwanie, edytowanie Pracowników i Departamentów
 -  Automatyczny przydział pracowników do działów na podstawie dostępności i pojemności działu
 -  Wyszukiwanie po imieniu, nazwisku i dziale
 -  Widoki dostępne tylko dla zalogowanych
--  Rejestracja i logowanie użytkownika 
+-  Rejestracja i logowanie użytkownika
 
 ##  Technologie
 
@@ -48,28 +46,12 @@ python manage.py migrate
 
 python manage.py runserver
 
-7.(Opcjonalnie) Utwórz użytkownika admina:
+Zarejestruj się aby mieć dostęp do innego widoku niż base.html i zarządaj pracownikami, działami z poziomu aplikacji webowej :)
 
-python manage.py createsuperuser
+Autor 
 
-Zostaniesz poproszony o:
+Michał Kowalski
 
-    nazwę użytkownika
-
-    adres e-mail
-
-    hasło
-
-Po utworzeniu konta wejdź w przeglądarce na:
-
-http://127.0.0.1:8000/admin/
-
-i zaloguj się, by zarządzać pracownikami, działami i innymi modelami! :)
-
-
-Autor
-
-Michał Kowalski – GitHub
 
 
 
